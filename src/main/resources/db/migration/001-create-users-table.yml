@@ -76,17 +76,5 @@ databaseChangeLog:
               - column:
                   name: active
 
-  - changeSet:
-      id: create-users-name-surname-index
-      author: Pavel Bulynko
-      changes:
-        - createIndex:
-            indexName: idx_users_name_surname
-            tableName: users
-            columns:
-              - column:
-                  name: name
-              - column:
-                  name: surname
 
 
