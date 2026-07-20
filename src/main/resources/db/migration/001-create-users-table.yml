@@ -1,0 +1,92 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-users
+      author: Pavel Bulynko
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: surname
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: birth_date
+                  type: DATE
+                  constraints:
+                    nullable: true
+              - column:
+                  name: email
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: create-users-email-index
+      author: Pavel Bulynko
+      changes:
+        - createIndex:
+            index_name: idx_users_email
+            tableName: users
+            unique: true
+            columns:
+              - column:
+                  name: email
+
+  - changeSet:
+      id: create-users-active-index
+      author: Pavel Bulynko
+      changes:
+        - createIndex:
+            indexName: idx_users_active
+            tableName: users
+            columns:
+              - column:
+                  name: active
+
+  - changeSet:
+      id: create-users-name-surname-index
+      author: Pavel Bulynko
+      changes:
+        - createIndex:
+            indexName: idx_users_name_surname
+            tableName: users
+            columns:
+              - column:
+                  name: name
+              - column:
+                  name: surname
+
+
