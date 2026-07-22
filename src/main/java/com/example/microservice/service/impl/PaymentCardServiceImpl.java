@@ -12,9 +12,12 @@ import com.example.microservice.exception.ResourceNotFoundException;
 import com.example.microservice.mapper.PaymentCardMapper;
 import com.example.microservice.repository.PaymentCardRepository;
 import com.example.microservice.repository.UserRepository;
+import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -48,11 +51,13 @@ public class PaymentCardServiceImpl implements PaymentCardService {
     }
 
     @Override
+    @Transactional
     public PaymentCardResponseDto updateCard(Long id, PaymentCardUpdateRequestDto requestDto) {
         PaymentCard card = paymentCardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment card not found with id: " + id));
         paymentCardMapper.updateEntityFromRequest(requestDto, card);
         PaymentCard saved = paymentCardRepository.save(card);
+        evictUserWithCardsCache(saved.getUser().getId());
         return paymentCardMapper.toDto(saved);
     }
 
@@ -60,12 +65,12 @@ public class PaymentCardServiceImpl implements PaymentCardService {
     public PaymentCardResponseDto getCardById(Long id) {
         PaymentCard card = paymentCardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment card not found with id: " + id));
-        PaymentCard saved = paymentCardRepository.save(card);
-        evictUserWithCardsCache(saved.getUser().getId());
-        return paymentCardMapper.toDto(saved);
+        evictUserWithCardsCache(card.getUser().getId());
+        return paymentCardMapper.toDto(card);
     }
 
     @Override
+    @Transactional
     public PaymentCardResponseDto activateCard(Long id) {
         PaymentCard card = paymentCardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment card not found with id: " + id));
@@ -76,6 +81,7 @@ public class PaymentCardServiceImpl implements PaymentCardService {
     }
 
     @Override
+    @Transactional
     public PaymentCardResponseDto deactivateCard(Long id) {
         PaymentCard card = paymentCardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment card not found with id: " + id));

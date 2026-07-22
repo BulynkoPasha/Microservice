@@ -4,6 +4,7 @@ import com.example.microservice.dto.request.PaymentCardCreateRequestDto;
 import com.example.microservice.dto.request.PaymentCardUpdateRequestDto;
 import com.example.microservice.dto.response.PaymentCardResponseDto;
 import com.example.microservice.entity.PaymentCard;
+import lombok.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

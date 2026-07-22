@@ -22,6 +22,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -45,6 +46,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = CacheNames.USERS_WITH_CARDS, key = "#id")
     public UserResponseDto updateUser(Long id, UserUpdateRequestDto requestDto) {
         User user = userRepository.findById(id)
@@ -62,6 +64,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = CacheNames.USERS_WITH_CARDS, key = "#id")
     public UserResponseDto activateUser(Long id) {
         User user = userRepository.findById(id)
@@ -72,6 +75,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = CacheNames.USERS_WITH_CARDS, key = "#id")
     public UserResponseDto deactivateUser(Long id) {
         User user = userRepository.findById(id)

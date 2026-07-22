@@ -73,5 +73,5 @@ databaseChangeLog:
             tableName: payment_cards
             columns:
               - column:
-                name: user_id
+                  name: user_id
 

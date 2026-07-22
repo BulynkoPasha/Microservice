@@ -3,6 +3,8 @@ package com.example.microservice.service;
 import com.example.microservice.dto.request.PaymentCardCreateRequestDto;
 import com.example.microservice.dto.request.PaymentCardUpdateRequestDto;
 import com.example.microservice.dto.response.PaymentCardResponseDto;
+import lombok.Builder;
+import lombok.Data;
 
 import java.util.List;
 

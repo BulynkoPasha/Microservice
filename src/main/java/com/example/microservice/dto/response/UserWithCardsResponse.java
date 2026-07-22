@@ -1,9 +1,14 @@
 package com.example.microservice.dto.response;
 
+import lombok.Builder;
+import lombok.Data;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Builder
+@Data
 public class UserWithCardsResponse {
 
     private Long id;
