@@ -1,10 +1,15 @@
-package com.example.microservice.dto.service.impl;
+package com.example.microservice.service.impl;
 
+import com.example.microservice.config.CacheNames;
 import com.example.microservice.dto.request.UserCreateRequestDto;
 import com.example.microservice.dto.request.UserUpdateRequestDto;
 import com.example.microservice.dto.request.filter.UserFilter;
+import com.example.microservice.dto.response.PaymentCardResponseDto;
 import com.example.microservice.dto.response.UserResponseDto;
-import com.example.microservice.dto.service.UserService;
+import com.example.microservice.dto.response.UserWithCardsResponse;
+import com.example.microservice.mapper.PaymentCardMapper;
+import com.example.microservice.repository.PaymentCardRepository;
+import com.example.microservice.service.UserService;
 import com.example.microservice.entity.User;
 import com.example.microservice.exception.DuplicateEmailException;
 import com.example.microservice.exception.ResourceNotFoundException;
@@ -12,9 +17,13 @@ import com.example.microservice.mapper.UserMapper;
 import com.example.microservice.repository.UserRepository;
 import com.example.microservice.repository.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -22,6 +31,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PaymentCardRepository paymentCardRepository;
+    private final PaymentCardMapper paymentCardMapper;
 
     @Override
     public UserResponseDto createUser(UserCreateRequestDto requestDto) {
@@ -34,6 +45,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = CacheNames.USERS_WITH_CARDS, key = "#id")
     public UserResponseDto updateUser(Long id, UserUpdateRequestDto requestDto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
@@ -50,6 +62,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = CacheNames.USERS_WITH_CARDS, key = "#id")
     public UserResponseDto activateUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
@@ -59,6 +72,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = CacheNames.USERS_WITH_CARDS, key = "#id")
     public UserResponseDto deactivateUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
@@ -74,5 +88,18 @@ public class UserServiceImpl implements UserService {
                 PageRequest.of(userFilter.getPage(), userFilter.getSize())
         );
         return page.map(userMapper::toDto);
+    }
+
+    @Override
+    @Cacheable(value = CacheNames.USERS_WITH_CARDS, key = "#id")
+    public UserWithCardsResponse getUserWithCards(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        List<PaymentCardResponseDto> cards = paymentCardRepository.findByUserId(id).stream()
+                .map(paymentCardMapper::toDto)
+                .toList();
+
+        return userMapper.toWithCardsResponse(user, cards);
     }
 }

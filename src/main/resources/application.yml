@@ -21,5 +21,13 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yml
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+    cache:
+      type: redis
+
 server:
   port: ${SERVER_PORT:8081}

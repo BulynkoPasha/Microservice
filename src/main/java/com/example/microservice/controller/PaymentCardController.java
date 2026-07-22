@@ -3,7 +3,7 @@ package com.example.microservice.controller;
 import com.example.microservice.dto.request.PaymentCardCreateRequestDto;
 import com.example.microservice.dto.request.PaymentCardUpdateRequestDto;
 import com.example.microservice.dto.response.PaymentCardResponseDto;
-import com.example.microservice.dto.service.PaymentCardService;
+import com.example.microservice.service.PaymentCardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

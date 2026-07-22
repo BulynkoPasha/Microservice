@@ -1,9 +1,10 @@
-package com.example.microservice.dto.service.impl;
+package com.example.microservice.service.impl;
 
+import com.example.microservice.config.CacheNames;
 import com.example.microservice.dto.request.PaymentCardCreateRequestDto;
 import com.example.microservice.dto.request.PaymentCardUpdateRequestDto;
 import com.example.microservice.dto.response.PaymentCardResponseDto;
-import com.example.microservice.dto.service.PaymentCardService;
+import com.example.microservice.service.PaymentCardService;
 import com.example.microservice.entity.PaymentCard;
 import com.example.microservice.entity.User;
 import com.example.microservice.exception.CardLimitExceededException;
@@ -12,6 +13,7 @@ import com.example.microservice.mapper.PaymentCardMapper;
 import com.example.microservice.repository.PaymentCardRepository;
 import com.example.microservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +26,7 @@ public class PaymentCardServiceImpl implements PaymentCardService {
     private final PaymentCardRepository paymentCardRepository;
     private final UserRepository userRepository;
     private final PaymentCardMapper paymentCardMapper;
+    private final CacheManager cacheManager;
 
 
     @Override
@@ -40,6 +43,7 @@ public class PaymentCardServiceImpl implements PaymentCardService {
         PaymentCard card = paymentCardMapper.toEntity(requestDto);
         card.setUser(user);
         PaymentCard saved = paymentCardRepository.save(card);
+        evictUserWithCardsCache(saved.getUser().getId());
         return paymentCardMapper.toDto(saved);
     }
 
@@ -56,7 +60,9 @@ public class PaymentCardServiceImpl implements PaymentCardService {
     public PaymentCardResponseDto getCardById(Long id) {
         PaymentCard card = paymentCardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment card not found with id: " + id));
-        return paymentCardMapper.toDto(card);
+        PaymentCard saved = paymentCardRepository.save(card);
+        evictUserWithCardsCache(saved.getUser().getId());
+        return paymentCardMapper.toDto(saved);
     }
 
     @Override
@@ -65,6 +71,7 @@ public class PaymentCardServiceImpl implements PaymentCardService {
                 .orElseThrow(() -> new ResourceNotFoundException("Payment card not found with id: " + id));
         card.setActive(true);
         PaymentCard saved = paymentCardRepository.save(card);
+        evictUserWithCardsCache(saved.getUser().getId());
         return paymentCardMapper.toDto(saved);
     }
 
@@ -74,6 +81,7 @@ public class PaymentCardServiceImpl implements PaymentCardService {
                 .orElseThrow(() -> new ResourceNotFoundException("Payment card not found with id: " + id));
         card.setActive(false);
         PaymentCard saved = paymentCardRepository.save(card);
+        evictUserWithCardsCache(saved.getUser().getId());
         return paymentCardMapper.toDto(saved);
     }
 
@@ -82,5 +90,12 @@ public class PaymentCardServiceImpl implements PaymentCardService {
         return paymentCardRepository.findByUserId(userId).stream()
                 .map(paymentCardMapper::toDto)
                 .toList();
+    }
+
+    private void evictUserWithCardsCache(Long userId) {
+        var cache = cacheManager.getCache(CacheNames.USERS_WITH_CARDS);
+        if (cache != null) {
+            cache.evict(userId);
+        }
     }
 }

@@ -4,7 +4,8 @@ import com.example.microservice.dto.request.UserCreateRequestDto;
 import com.example.microservice.dto.request.UserUpdateRequestDto;
 import com.example.microservice.dto.request.filter.UserFilter;
 import com.example.microservice.dto.response.UserResponseDto;
-import com.example.microservice.dto.service.UserService;
+import com.example.microservice.dto.response.UserWithCardsResponse;
+import com.example.microservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -70,6 +71,11 @@ public class UserController {
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<UserResponseDto> deactivateUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.deactivateUser(id));
+    }
+
+    @GetMapping("/{id}/with-cards")
+    public ResponseEntity<UserWithCardsResponse> getUserWithCards(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserWithCards(id));
     }
 
 }

@@ -1,4 +1,4 @@
-package com.example.microservice.dto.service;
+package com.example.microservice.service;
 
 import com.example.microservice.dto.request.PaymentCardCreateRequestDto;
 import com.example.microservice.dto.request.PaymentCardUpdateRequestDto;
