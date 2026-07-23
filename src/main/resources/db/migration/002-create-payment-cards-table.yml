@@ -75,3 +75,26 @@ databaseChangeLog:
               - column:
                   name: user_id
 
+  - changeSet:
+      id: create-payment-cards-active-index
+      author: Pavel Bulynko
+      changes:
+        - createIndex:
+            indexName: idx_payment_cards_active
+            tableName: payment_cards
+            columns:
+              - column:
+                  name: active
+
+  - changeSet:
+      id: create-payment-cards-user-id-active-index
+      author: Pavel Bulynko
+      changes:
+        - createIndex:
+            indexName: idx_payment_cards_user_id_active
+            tableName: payment_cards
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: active

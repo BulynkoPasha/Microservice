@@ -47,6 +47,7 @@ public class User extends Audit {
     @Column(nullable = false)
     private boolean active;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PaymentCard> cards = new ArrayList<>();
 

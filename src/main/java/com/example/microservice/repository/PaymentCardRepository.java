@@ -2,6 +2,7 @@ package com.example.microservice.repository;
 
 import com.example.microservice.entity.PaymentCard;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,12 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface PaymentCardRepository extends JpaRepository<PaymentCard, Long> {
+public interface PaymentCardRepository extends JpaRepository<PaymentCard, Long>,
+        JpaSpecificationExecutor<PaymentCard> {
 
     // Named method
     List<PaymentCard> findByUserId(Long userId);
 
-    long countByUserId(Long userId);
+    @Query("SELECT COUNT(c) FROM PaymentCard c WHERE c.user.id = :userId")
+    long countByUserId(@Param("userId") Long userId);
 
     // JPQL
     @Query("SELECT c FROM PaymentCard c WHERE c.user.id = :userId AND c.active = true")

@@ -74,7 +74,7 @@ class PaymentCardServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(paymentCardRepository.countByUserId(1L)).thenReturn(2L);
         when(paymentCardMapper.toEntity(request)).thenReturn(card);
-        when(paymentCardRepository.save(card)).thenReturn(card);
+        when(userRepository.save(user)).thenReturn(user);
         when(paymentCardMapper.toDto(card)).thenReturn(cardResponse);
         when(cacheManager.getCache(CacheNames.USERS_WITH_CARDS)).thenReturn(cache);
 

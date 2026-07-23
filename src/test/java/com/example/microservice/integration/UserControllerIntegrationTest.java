@@ -3,12 +3,14 @@ package com.example.microservice.integration;
 import com.example.microservice.dto.request.UserCreateRequestDto;
 import com.example.microservice.dto.request.UserUpdateRequestDto;
 import com.example.microservice.dto.response.UserResponseDto;
+import com.example.microservice.entity.User;
 import com.example.microservice.exception.ErrorResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -117,6 +119,35 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void getUserWithCards_shouldServeCachedValue_thenReflectUpdateAfterEviction() {
+        ResponseEntity<UserResponseDto> created = restTemplate.postForEntity(
+                "/api/v1/users", validRequest("cache2@test.com"), UserResponseDto.class);
+        Long id = created.getBody().getId();
+
+        ResponseEntity<Map> firstCall = restTemplate.getForEntity(
+                "/api/v1/users/" + id + "/with-cards", Map.class);
+        assertThat(firstCall.getBody().get("name")).isEqualTo("Ivan");
+
+        User user = userRepository.findById(id).orElseThrow();
+        user.setName("ChangedDirectly");
+        userRepository.save(user);
+
+        ResponseEntity<Map> cachedCall = restTemplate.getForEntity(
+                "/api/v1/users/" + id + "/with-cards", Map.class);
+
+        assertThat(cachedCall.getBody().get("name")).isEqualTo("Ivan");
+
+        UserUpdateRequestDto update = UserUpdateRequestDto.builder()
+                .name("ChangedViaApi").surname("Petrov").email("cache2@test.com")
+                .birthDate(LocalDate.of(1990, 1, 1)).build();
+        restTemplate.put("/api/v1/users/" + id, update);
+
+        ResponseEntity<Map> afterEviction = restTemplate.getForEntity(
+                "/api/v1/users/" + id + "/with-cards", Map.class);
+        assertThat(afterEviction.getBody().get("name")).isEqualTo("ChangedViaApi");
+    }
+
+    @Test
     void getUserWithCards_shouldServeCachedResultOnSecondCall_reflectingUpdate() {
         ResponseEntity<UserResponseDto> created = restTemplate.postForEntity(
                 "/api/v1/users", validRequest("cache1@test.com"), UserResponseDto.class);
@@ -133,7 +164,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
 
         // second call (wixth cash)
         ResponseEntity<java.util.Map> response = restTemplate.getForEntity(
-                "/api/v1/users/" + id + "/with-cards", java.util.Map.class);
+                "/api/v1/users/" + id + "/with-cards", Map.class);
 
         assertThat(response.getBody().get("name")).isEqualTo("Changed");
     }

@@ -7,10 +7,14 @@ import com.example.microservice.dto.response.UserResponseDto;
 import com.example.microservice.dto.response.UserWithCardsResponse;
 import com.example.microservice.service.UserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/v1/users")
 @RequiredArgsConstructor
+@Validated
 public class UserController {
 
     private final UserService userService;
@@ -43,8 +48,8 @@ public class UserController {
     public ResponseEntity<Page<UserResponseDto>> getAllUsers(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String surname,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
 
         UserFilter filter = UserFilter.builder()
                 .name(name)
@@ -76,6 +81,17 @@ public class UserController {
     @GetMapping("/{id}/with-cards")
     public ResponseEntity<UserWithCardsResponse> getUserWithCards(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserWithCards(id));
+    }
+
+    @GetMapping("/{id}/active")
+    public ResponseEntity<UserResponseDto> getActiveUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getActiveUserById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -173,7 +173,6 @@ class UserServiceImplTest {
     void activateUser_shouldSetActiveTrue() {
         user.setActive(false);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toDto(user)).thenReturn(userResponse);
 
         userService.activateUser(1L);
@@ -184,7 +183,6 @@ class UserServiceImplTest {
     @Test
     void deactivateUser_shouldSetActiveFalse() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toDto(user)).thenReturn(userResponse);
 
         userService.deactivateUser(1L);
