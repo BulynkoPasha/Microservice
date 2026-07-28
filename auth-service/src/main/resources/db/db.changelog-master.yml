@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: db/migration/001-create-credentials-table.yml
+      relativeToChangelogFile: false
