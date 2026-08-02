@@ -5,6 +5,7 @@ import com.example.microservice.dto.request.UserUpdateRequestDto;
 import com.example.microservice.dto.request.filter.UserFilter;
 import com.example.microservice.dto.response.UserResponseDto;
 import com.example.microservice.dto.response.UserWithCardsResponse;
+import com.example.microservice.security.AuthenticatedUser;
 import com.example.microservice.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,12 +42,15 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserCreateRequestDto requestDto) {
-        UserResponseDto userResponseDto = userService.createUser(requestDto);
+    public ResponseEntity<UserResponseDto> createUser(
+            @Valid @RequestBody UserCreateRequestDto requestDto,
+            @AuthenticationPrincipal AuthenticatedUser principal) {
+        UserResponseDto userResponseDto = userService.createUser(requestDto, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponseDto);
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<UserResponseDto>> getAllUsers(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String surname,
@@ -62,6 +68,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.userId")
     public ResponseEntity<UserResponseDto> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequestDto requestDto) {
@@ -69,26 +76,31 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> activateUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.activateUser(id));
     }
 
     @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> deactivateUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.deactivateUser(id));
     }
 
     @GetMapping("/{id}/with-cards")
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.userId")
     public ResponseEntity<UserWithCardsResponse> getUserWithCards(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserWithCards(id));
     }
 
     @GetMapping("/{id}/active")
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.userId")
     public ResponseEntity<UserResponseDto> getActiveUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getActiveUserById(id));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
