@@ -11,7 +11,7 @@ import org.springframework.data.domain.Page;
 
 public interface UserService {
 
-    UserResponseDto createUser(UserCreateRequestDto requestDto);
+    UserResponseDto createUser(UserCreateRequestDto requestDto, Long authenticatedUserId);
 
     UserResponseDto updateUser(Long id, UserUpdateRequestDto requestDto);
 
