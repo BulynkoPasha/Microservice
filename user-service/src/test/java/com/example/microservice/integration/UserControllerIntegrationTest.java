@@ -6,6 +6,7 @@ import com.example.microservice.dto.response.UserResponseDto;
 import com.example.microservice.entity.User;
 import com.example.microservice.exception.ErrorResponse;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -25,10 +26,25 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
                 .build();
     }
 
+    private ResponseEntity<UserResponseDto> createUser(String email, Long userId) {
+        return restTemplate.exchange(
+                "/api/v1/users",
+                HttpMethod.POST,
+                authHeader(validRequest(email), userId, "USER"),
+                UserResponseDto.class);
+    }
+
+    private ResponseEntity<UserResponseDto> getUser(Long id, Long callerUserId, String role) {
+        return restTemplate.exchange(
+                "/api/v1/users/" + id,
+                HttpMethod.GET,
+                authHeader(callerUserId, role),
+                UserResponseDto.class);
+    }
+
     @Test
     void createUser_shouldReturn201_whenRequestValid() {
-        ResponseEntity<UserResponseDto> response = restTemplate.postForEntity(
-                "/api/v1/users", validRequest("ivan1@test.com"), UserResponseDto.class);
+        ResponseEntity<UserResponseDto> response = createUser("ivan1@test.com", 1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).isNotNull();
@@ -38,10 +54,13 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void createUser_shouldReturn409_whenEmailAlreadyExists() {
-        restTemplate.postForEntity("/api/v1/users", validRequest("dup@test.com"), UserResponseDto.class);
+        createUser("dup@test.com", 10L);
 
-        ResponseEntity<ErrorResponse> response = restTemplate.postForEntity(
-                "/api/v1/users", validRequest("dup@test.com"), ErrorResponse.class);
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/v1/users",
+                HttpMethod.POST,
+                authHeader(validRequest("dup@test.com"), 11L, "USER"),
+                ErrorResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
@@ -52,20 +71,21 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
                 .name("").surname("Petrov").email("invalid@test.com")
                 .birthDate(LocalDate.of(1999, 1, 1)).build();
 
-        ResponseEntity<ErrorResponse> response = restTemplate.postForEntity(
-                "/api/v1/users", invalid, ErrorResponse.class);
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/v1/users",
+                HttpMethod.POST,
+                authHeader(invalid, 12L, "USER"),
+                ErrorResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
     void getUserById_shouldReturn200_whenUserExists() {
-        ResponseEntity<UserResponseDto> created = restTemplate.postForEntity(
-                "/api/v1/users", validRequest("get1@test.com"), UserResponseDto.class);
+        ResponseEntity<UserResponseDto> created = createUser("get1@test.com", 2L);
         Long id = created.getBody().getId();
 
-        ResponseEntity<UserResponseDto> response = restTemplate.getForEntity(
-                "/api/v1/users/" + id, UserResponseDto.class);
+        ResponseEntity<UserResponseDto> response = getUser(id, id, "USER");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().getId()).isEqualTo(id);
@@ -73,99 +93,90 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void getUserById_shouldReturn404_whenUserMissing() {
-        ResponseEntity<ErrorResponse> response = restTemplate.getForEntity(
-                "/api/v1/users/999999", ErrorResponse.class);
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/v1/users/999999",
+                HttpMethod.GET,
+                authHeader(999999L, "ADMIN"),
+                ErrorResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
     void updateUser_shouldReturn200AndUpdatedData() {
-        ResponseEntity<UserResponseDto> created = restTemplate.postForEntity(
-                "/api/v1/users", validRequest("update1@test.com"), UserResponseDto.class);
+        ResponseEntity<UserResponseDto> created = createUser("update1@test.com", 3L);
         Long id = created.getBody().getId();
 
         UserUpdateRequestDto update = UserUpdateRequestDto.builder()
                 .name("Petr").surname("Sidorov").email("update1@test.com")
                 .birthDate(LocalDate.of(2000, 2, 2)).build();
 
-        restTemplate.put("/api/v1/users/" + id, update);
+        restTemplate.exchange(
+                "/api/v1/users/" + id,
+                HttpMethod.PUT,
+                authHeader(update, id, "USER"),
+                UserResponseDto.class);
 
-        ResponseEntity<UserResponseDto> response = restTemplate.getForEntity(
-                "/api/v1/users/" + id, UserResponseDto.class);
+        ResponseEntity<UserResponseDto> response = getUser(id, id, "USER");
 
         assertThat(response.getBody().getName()).isEqualTo("Petr");
     }
 
     @Test
     void activateAndDeactivateUser_shouldToggleActiveStatus() {
-        ResponseEntity<UserResponseDto> created = restTemplate.postForEntity(
-                "/api/v1/users", validRequest("toggle1@test.com"), UserResponseDto.class);
+        ResponseEntity<UserResponseDto> created = createUser("toggle1@test.com", 4L);
         Long id = created.getBody().getId();
 
         restTemplate.exchange("/api/v1/users/" + id + "/deactivate",
-                org.springframework.http.HttpMethod.PATCH, null, UserResponseDto.class);
+                HttpMethod.PATCH, authHeader(id, "ADMIN"), UserResponseDto.class);
 
-        ResponseEntity<UserResponseDto> afterDeactivate = restTemplate.getForEntity(
-                "/api/v1/users/" + id, UserResponseDto.class);
+        ResponseEntity<UserResponseDto> afterDeactivate = getUser(id, id, "ADMIN");
         assertThat(afterDeactivate.getBody().isActive()).isFalse();
 
         restTemplate.exchange("/api/v1/users/" + id + "/activate",
-                org.springframework.http.HttpMethod.PATCH, null, UserResponseDto.class);
+                HttpMethod.PATCH, authHeader(id, "ADMIN"), UserResponseDto.class);
 
-        ResponseEntity<UserResponseDto> afterActivate = restTemplate.getForEntity(
-                "/api/v1/users/" + id, UserResponseDto.class);
+        ResponseEntity<UserResponseDto> afterActivate = getUser(id, id, "ADMIN");
         assertThat(afterActivate.getBody().isActive()).isTrue();
     }
 
     @Test
     void getUserWithCards_shouldServeCachedValue_thenReflectUpdateAfterEviction() {
-        ResponseEntity<UserResponseDto> created = restTemplate.postForEntity(
-                "/api/v1/users", validRequest("cache2@test.com"), UserResponseDto.class);
+        ResponseEntity<UserResponseDto> created = createUser("cache2@test.com", 5L);
         Long id = created.getBody().getId();
 
-        ResponseEntity<Map> firstCall = restTemplate.getForEntity(
-                "/api/v1/users/" + id + "/with-cards", Map.class);
+        ResponseEntity<Map> firstCall = restTemplate.exchange(
+                "/api/v1/users/" + id + "/with-cards",
+                HttpMethod.GET,
+                authHeader(id, "USER"),
+                Map.class);
         assertThat(firstCall.getBody().get("name")).isEqualTo("Ivan");
 
         User user = userRepository.findById(id).orElseThrow();
         user.setName("ChangedDirectly");
         userRepository.save(user);
 
-        ResponseEntity<Map> cachedCall = restTemplate.getForEntity(
-                "/api/v1/users/" + id + "/with-cards", Map.class);
-
+        ResponseEntity<Map> cachedCall = restTemplate.exchange(
+                "/api/v1/users/" + id + "/with-cards",
+                HttpMethod.GET,
+                authHeader(id, "USER"),
+                Map.class);
         assertThat(cachedCall.getBody().get("name")).isEqualTo("Ivan");
 
         UserUpdateRequestDto update = UserUpdateRequestDto.builder()
                 .name("ChangedViaApi").surname("Petrov").email("cache2@test.com")
                 .birthDate(LocalDate.of(1990, 1, 1)).build();
-        restTemplate.put("/api/v1/users/" + id, update);
+        restTemplate.exchange(
+                "/api/v1/users/" + id,
+                HttpMethod.PUT,
+                authHeader(update, id, "USER"),
+                UserResponseDto.class);
 
-        ResponseEntity<Map> afterEviction = restTemplate.getForEntity(
-                "/api/v1/users/" + id + "/with-cards", Map.class);
+        ResponseEntity<Map> afterEviction = restTemplate.exchange(
+                "/api/v1/users/" + id + "/with-cards",
+                HttpMethod.GET,
+                authHeader(id, "USER"),
+                Map.class);
         assertThat(afterEviction.getBody().get("name")).isEqualTo("ChangedViaApi");
-    }
-
-    @Test
-    void getUserWithCards_shouldServeCachedResultOnSecondCall_reflectingUpdate() {
-        ResponseEntity<UserResponseDto> created = restTemplate.postForEntity(
-                "/api/v1/users", validRequest("cache1@test.com"), UserResponseDto.class);
-        Long id = created.getBody().getId();
-
-        // first call
-        restTemplate.getForEntity("/api/v1/users/" + id + "/with-cards", Object.class);
-
-        // chanhe user
-        UserUpdateRequestDto update = UserUpdateRequestDto.builder()
-                .name("Changed").surname("Petrov").email("cache1@test.com")
-                .birthDate(LocalDate.of(1999, 1, 1)).build();
-        restTemplate.put("/api/v1/users/" + id, update);
-
-        // second call (wixth cash)
-        ResponseEntity<java.util.Map> response = restTemplate.getForEntity(
-                "/api/v1/users/" + id + "/with-cards", Map.class);
-
-        assertThat(response.getBody().get("name")).isEqualTo("Changed");
     }
 }
