@@ -23,3 +23,16 @@ spring:
 
 server:
   port: ${SERVER_PORT:8083}
+
+user-service:
+  url: ${USER_SERVICE_URL:http://localhost:8081}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userService:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-closed-enabled: true
