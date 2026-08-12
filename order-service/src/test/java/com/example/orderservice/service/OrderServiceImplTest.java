@@ -84,11 +84,35 @@ class OrderServiceImplTest {
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(orderMapper.toResponse(order)).thenReturn(orderResponse);
         when(userServiceClient.getUserInfo(5L, AUTH_HEADER)).thenReturn(userInfo);
+        when(orderMapper.toEntity(request)).thenReturn(
+                Order.builder().items(new java.util.ArrayList<>()).build());
 
         var result = orderService.createOrder(request, AUTH_HEADER);
 
         assertThat(result.getOrder()).isEqualTo(orderResponse);
         assertThat(result.getUser()).isEqualTo(userInfo);
+    }
+
+    @Test
+    void createOrder_shouldReturnPlaceholderUser_whenUserServiceUnavailable() {
+        OrderCreateRequestDto request = OrderCreateRequestDto.builder()
+                .userId(5L)
+                .items(List.of(OrderItemRequestDto.builder().itemId(1L).quantity(1).build()))
+                .build();
+
+        when(orderMapper.toEntity(request)).thenReturn(
+                Order.builder().items(new java.util.ArrayList<>()).build());
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(orderMapper.toResponse(order)).thenReturn(orderResponse);
+        when(userServiceClient.getUserInfo(5L, AUTH_HEADER))
+                .thenThrow(new org.springframework.web.client.ResourceAccessException("Connection refused"));
+
+        var result = orderService.createOrder(request, AUTH_HEADER);
+
+        assertThat(result.getOrder()).isEqualTo(orderResponse);
+        assertThat(result.getUser()).isNotNull();
+        assertThat(result.getUser().getEmail()).isEqualTo("unavailable");
     }
 
     @Test
@@ -99,28 +123,11 @@ class OrderServiceImplTest {
                 .build();
 
         when(itemRepository.findById(99L)).thenReturn(Optional.empty());
+        when(orderMapper.toEntity(request)).thenReturn(
+                Order.builder().items(new java.util.ArrayList<>()).build());
 
         assertThatThrownBy(() -> orderService.createOrder(request, AUTH_HEADER))
                 .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    void createOrder_shouldReturnNullUser_whenUserServiceUnavailable() {
-        OrderCreateRequestDto request = OrderCreateRequestDto.builder()
-                .userId(5L)
-                .items(List.of(OrderItemRequestDto.builder().itemId(1L).quantity(1).build()))
-                .build();
-
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        when(orderRepository.save(any(Order.class))).thenReturn(order);
-        when(orderMapper.toResponse(order)).thenReturn(orderResponse);
-        when(userServiceClient.getUserInfo(5L, AUTH_HEADER))
-                .thenThrow(new org.springframework.web.client.ResourceAccessException("Connection refused"));
-
-        var result = orderService.createOrder(request, AUTH_HEADER);
-
-        assertThat(result.getOrder()).isEqualTo(orderResponse);
-        assertThat(result.getUser()).isNull();
     }
 
     @Test

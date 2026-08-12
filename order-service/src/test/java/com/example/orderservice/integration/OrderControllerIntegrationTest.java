@@ -73,7 +73,7 @@ class OrderControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void createOrder_shouldReturnOrderWithNullUser_whenUserServiceIsDown() {
+    void createOrder_shouldReturnPlaceholderUser_whenUserServiceIsDown() {
         Item item = itemRepository.save(Item.builder().name("Gadget").price(BigDecimal.valueOf(20)).build());
         stubUserServiceFailure(8L);
 
@@ -86,7 +86,11 @@ class OrderControllerIntegrationTest extends AbstractIntegrationTest {
                 "/api/v1/orders", HttpMethod.POST, requestWithAuth(request), Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody().get("user")).isNull();
+
+        Map<String, Object> user = (Map<String, Object>) response.getBody().get("user");
+        assertThat(user).isNotNull();
+        assertThat(user.get("email")).isEqualTo("unavailable");
+
         Map<String, Object> order = (Map<String, Object>) response.getBody().get("order");
         assertThat(order.get("totalPrice")).isEqualTo(20.0);
     }
