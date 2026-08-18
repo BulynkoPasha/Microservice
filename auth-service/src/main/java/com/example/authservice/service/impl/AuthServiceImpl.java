@@ -54,8 +54,9 @@ public class AuthServiceImpl implements AuthService {
 
         Credential saved = credentialRepository.save(credential);
         saved.setUserId(saved.getId());
+        Credential withUserId = credentialRepository.save(saved);
 
-        return issueTokenPair(saved.getUserId(), saved.getRole().name());
+        return issueTokenPair(withUserId.getUserId(), withUserId.getRole().name());
     }
 
     @Override
