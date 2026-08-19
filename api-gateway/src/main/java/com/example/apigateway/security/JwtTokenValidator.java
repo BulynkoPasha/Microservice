@@ -28,6 +28,10 @@ public class JwtTokenValidator {
         }
     }
 
+    public Long extractUserId(String token) {
+        return Long.valueOf(parseClaims(token).getSubject());
+    }
+
     private Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(signingKey)
