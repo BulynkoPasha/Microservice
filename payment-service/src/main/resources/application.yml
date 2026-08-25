@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: payment-service
+
+  data:
+    mongodb:
+      host: ${DB_HOST:localhost}
+      port: ${DB_PORT:27017}
+      database: ${DB_NAME:payment_service_db}
+      username: ${DB_USERNAME:}
+      password: ${DB_PASSWORD:}
+      authentication-database: admin
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/db.changelog-master.yml
+
+server:
+  port: ${SERVER_PORT:8084}
