@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: db/migration/001-create-payments-collection.yml
+      relativeToChangelogFile: false

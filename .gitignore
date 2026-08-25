@@ -11,6 +11,7 @@ target/
 *.ipr
 postman/
 .postman/
+.env
 
 ### Eclipse ###
 .apt_generated

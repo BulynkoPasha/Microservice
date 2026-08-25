@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-payments-collection
+      author: Pavel Bulynko
+      changes:
+        - createCollection:
+            collectionName: payments
+
+  - changeSet:
+      id: create-payments-order-id-index
+      author: Pavel Bulynko
+      changes:
+        - createIndex:
+            collectionName: payments
+            indexName: idx_payments_order_id
+            keys: '{ orderId: 1 }'
+
+  - changeSet:
+      id: create-payments-user-id-index
+      author: Pavel Bulynko
+      changes:
+        - createIndex:
+            collectionName: payments
+            indexName: idx_payments_user_id
+            keys: '{ userId: 1 }'
+
+  - changeSet:
+      id: create-payments-status-index
+      author: Pavel Bulynko
+      changes:
+        - createIndex:
+            collectionName: payments
+            indexName: idx_payments_status
+            keys: '{ status: 1 }'
+
+  - changeSet:
+      id: create-payments-timestamp-index
+      author: Pavel Bulynko
+      changes:
+        - createIndex:
+            collectionName: payments
+            indexName: idx_payments_timestamp
+            keys: '{ timestamp: -1 }'
