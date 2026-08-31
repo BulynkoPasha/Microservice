@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: db/migration/001-create-credentials-table.yml
+      relativeToChangelogFile: false
+  - include:
+      file: db/migration/002-create-refresh-tokens-table.yml
+      relativeToChangelogFile: false

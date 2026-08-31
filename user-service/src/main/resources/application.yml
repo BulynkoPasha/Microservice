@@ -32,5 +32,8 @@ spring:
     cache:
       type: redis
 
+jwt:
+  secret: ${JWT_SECRET}
+
 server:
   port: ${SERVER_PORT:8081}

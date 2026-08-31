@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -85,12 +86,13 @@ class UserServiceImplTest {
                 .birthDate(LocalDate.of(1999, 1, 1))
                 .build();
 
+        when(userRepository.existsById(1L)).thenReturn(false);
         when(userRepository.existsByEmail("ivan@test.com")).thenReturn(false);
         when(userMapper.toEntity(request)).thenReturn(user);
         when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toDto(user)).thenReturn(userResponse);
 
-        UserResponseDto result = userService.createUser(request);
+        UserResponseDto result = userService.createUser(request, 1L);
 
         assertThat(result.getEmail()).isEqualTo("ivan@test.com");
         verify(userRepository).save(user);
@@ -102,9 +104,10 @@ class UserServiceImplTest {
                 .name("Ivan").surname("Petrov").email("ivan@test.com")
                 .build();
 
+        when(userRepository.existsById(1L)).thenReturn(false);
         when(userRepository.existsByEmail("ivan@test.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> userService.createUser(request))
+        assertThatThrownBy(() -> userService.createUser(request, 1L))
                 .isInstanceOf(DuplicateEmailException.class);
 
         verify(userRepository, never()).save(any());

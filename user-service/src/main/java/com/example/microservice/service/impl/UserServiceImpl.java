@@ -40,11 +40,15 @@ public class UserServiceImpl implements UserService {
     private final PaymentCardMapper paymentCardMapper;
 
     @Override
-    public UserResponseDto createUser(UserCreateRequestDto requestDto) {
+    public UserResponseDto createUser(UserCreateRequestDto requestDto, Long authId) {
+        if (userRepository.existsById(authId)) {
+            throw new IllegalStateException("Profile already exists for this user");
+        }
         if (userRepository.existsByEmail(requestDto.getEmail())) {
             throw new DuplicateEmailException("User with email " + requestDto.getEmail() + " already exists");
         }
         User user = userMapper.toEntity(requestDto);
+        user.setId(authId);
         User saved = userRepository.save(user);
         return userMapper.toDto(saved);
     }

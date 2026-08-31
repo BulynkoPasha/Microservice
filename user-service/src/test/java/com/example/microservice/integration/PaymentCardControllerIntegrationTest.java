@@ -6,6 +6,7 @@ import com.example.microservice.dto.response.PaymentCardResponseDto;
 import com.example.microservice.dto.response.UserResponseDto;
 import com.example.microservice.exception.ErrorResponse;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -15,12 +16,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PaymentCardControllerIntegrationTest extends AbstractIntegrationTest {
 
-    private Long createUser(String email) {
+    private Long createUser(String email, Long userId) {
         UserCreateRequestDto request = UserCreateRequestDto.builder()
                 .name("Ivan").surname("Petrov").email(email)
                 .birthDate(LocalDate.of(1990, 1, 1)).build();
-        return restTemplate.postForEntity("/api/v1/users", request, UserResponseDto.class)
-                .getBody().getId();
+        ResponseEntity<UserResponseDto> response = restTemplate.exchange(
+                "/api/v1/users",
+                HttpMethod.POST,
+                authHeader(request, userId, "USER"),
+                UserResponseDto.class);
+        return response.getBody().getId();
     }
 
     private PaymentCardCreateRequestDto cardRequest(Long userId) {
@@ -29,12 +34,19 @@ class PaymentCardControllerIntegrationTest extends AbstractIntegrationTest {
                 .expirationDate(LocalDate.now().plusYears(2)).build();
     }
 
+    private ResponseEntity<PaymentCardResponseDto> createCard(Long userId) {
+        return restTemplate.exchange(
+                "/api/v1/cards",
+                HttpMethod.POST,
+                authHeader(cardRequest(userId), userId, "USER"),
+                PaymentCardResponseDto.class);
+    }
+
     @Test
     void createCard_shouldReturn201_whenUnderLimit() {
-        Long userId = createUser("card1@test.com");
+        Long userId = createUser("card1@test.com", 20L);
 
-        ResponseEntity<PaymentCardResponseDto> response = restTemplate.postForEntity(
-                "/api/v1/cards", cardRequest(userId), PaymentCardResponseDto.class);
+        ResponseEntity<PaymentCardResponseDto> response = createCard(userId);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().getUserId()).isEqualTo(userId);
@@ -42,49 +54,60 @@ class PaymentCardControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void createCard_shouldReturn400_whenLimitExceeded() {
-        Long userId = createUser("card2@test.com");
+        Long userId = createUser("card2@test.com", 21L);
 
         for (int i = 0; i < 5; i++) {
-            restTemplate.postForEntity("/api/v1/cards", cardRequest(userId), PaymentCardResponseDto.class);
+            createCard(userId);
         }
 
-        ResponseEntity<ErrorResponse> response = restTemplate.postForEntity(
-                "/api/v1/cards", cardRequest(userId), ErrorResponse.class);
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/v1/cards",
+                HttpMethod.POST,
+                authHeader(cardRequest(userId), userId, "USER"),
+                ErrorResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
     void createCard_shouldReturn404_whenUserMissing() {
-        ResponseEntity<ErrorResponse> response = restTemplate.postForEntity(
-                "/api/v1/cards", cardRequest(999999L), ErrorResponse.class);
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/v1/cards",
+                HttpMethod.POST,
+                authHeader(cardRequest(999999L), 1L, "ADMIN"),
+                ErrorResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
     void getCardsByUserId_shouldReturnAllCardsForUser() {
-        Long userId = createUser("card3@test.com");
-        restTemplate.postForEntity("/api/v1/cards", cardRequest(userId), PaymentCardResponseDto.class);
-        restTemplate.postForEntity("/api/v1/cards", cardRequest(userId), PaymentCardResponseDto.class);
+        Long userId = createUser("card3@test.com", 22L);
+        createCard(userId);
+        createCard(userId);
 
-        ResponseEntity<PaymentCardResponseDto[]> response = restTemplate.getForEntity(
-                "/api/v1/cards/user/" + userId, PaymentCardResponseDto[].class);
+        ResponseEntity<PaymentCardResponseDto[]> response = restTemplate.exchange(
+                "/api/v1/cards/user/" + userId,
+                HttpMethod.GET,
+                authHeader(userId, "USER"),
+                PaymentCardResponseDto[].class);
 
         assertThat(response.getBody()).hasSize(2);
     }
 
     @Test
     void activateAndDeactivateCard_shouldToggleActiveStatus() {
-        Long userId = createUser("card4@test.com");
-        Long cardId = restTemplate.postForEntity(
-                "/api/v1/cards", cardRequest(userId), PaymentCardResponseDto.class).getBody().getId();
+        Long userId = createUser("card4@test.com", 23L);
+        Long cardId = createCard(userId).getBody().getId();
 
         restTemplate.exchange("/api/v1/cards/" + cardId + "/deactivate",
-                org.springframework.http.HttpMethod.PATCH, null, PaymentCardResponseDto.class);
+                HttpMethod.PATCH, authHeader(userId, "USER"), PaymentCardResponseDto.class);
 
-        ResponseEntity<PaymentCardResponseDto> afterDeactivate = restTemplate.getForEntity(
-                "/api/v1/cards/" + cardId, PaymentCardResponseDto.class);
+        ResponseEntity<PaymentCardResponseDto> afterDeactivate = restTemplate.exchange(
+                "/api/v1/cards/" + cardId,
+                HttpMethod.GET,
+                authHeader(userId, "USER"),
+                PaymentCardResponseDto.class);
         assertThat(afterDeactivate.getBody().isActive()).isFalse();
     }
 }
