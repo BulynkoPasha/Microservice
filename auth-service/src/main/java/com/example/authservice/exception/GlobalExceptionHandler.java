@@ -46,6 +46,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", details);
     }
 
+    @ExceptionHandler(InternalAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleInternalAccessDenied(InternalAccessDeniedException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Access denied", null);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         log.error("Unexpected error", ex);
