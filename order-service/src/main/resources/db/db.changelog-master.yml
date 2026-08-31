@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - include:
+      file: db/migration/001-create-orders-table.yml
+      relativeToChangelogFile: false
+  - include:
+      file: db/migration/002-create-items-table.yml
+      relativeToChangelogFile: false
+  - include:
+      file: db/migration/003-create-order-items-table.yml
+      relativeToChangelogFile: false
