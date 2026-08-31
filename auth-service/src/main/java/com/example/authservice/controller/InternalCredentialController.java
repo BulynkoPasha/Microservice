@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+
 @RestController
 @RequestMapping("/internal/credentials")
 @RequiredArgsConstructor
@@ -28,11 +31,20 @@ public class InternalCredentialController {
             @PathVariable Long userId,
             @RequestHeader("X-Internal-Secret") String providedSecret) {
 
-        if (!internalSecret.equals(providedSecret)) {
+        if (!isSecretValid(providedSecret)) {
             throw new InternalAccessDeniedException("Invalid internal secret");
         }
 
         credentialRepository.deleteByUserId(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean isSecretValid(String providedSecret) {
+        if (providedSecret == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                internalSecret.getBytes(StandardCharsets.UTF_8),
+                providedSecret.getBytes(StandardCharsets.UTF_8));
     }
 }

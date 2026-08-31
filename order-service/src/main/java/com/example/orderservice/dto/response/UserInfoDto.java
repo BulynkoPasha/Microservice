@@ -1,4 +1,4 @@
-package com.example.authservice.dto.response;
+package com.example.orderservice.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,9 +11,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TokenResponse {
+public class UserInfoDto {
 
-    private Long userId;
-    private String accessToken;
-    private String refreshToken;
+    private Long id;
+    private String name;
+    private String surname;
+    private String email;
 }
