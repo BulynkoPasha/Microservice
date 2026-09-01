@@ -27,11 +27,6 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
     }
 
-    @ExceptionHandler(InternalAccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidToken(InternalAccessDeniedException ex) {
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
-    }
-
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
         log.error("Internal server error", ex);
