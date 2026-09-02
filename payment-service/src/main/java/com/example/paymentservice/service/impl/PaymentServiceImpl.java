@@ -6,7 +6,9 @@ import com.example.paymentservice.dto.response.PaymentResponseDto;
 import com.example.paymentservice.dto.response.TotalSumResponseDto;
 import com.example.paymentservice.entity.Payment;
 import com.example.paymentservice.entity.PaymentStatus;
+import com.example.paymentservice.event.PaymentCreatedEvent;
 import com.example.paymentservice.mapper.PaymentMapper;
+import com.example.paymentservice.producer.PaymentEventProducer;
 import com.example.paymentservice.repository.PaymentRepository;
 import com.example.paymentservice.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
     private final RandomNumberClient randomNumberClient;
+    private final PaymentEventProducer paymentEventProducer;
 
     @Override
     public PaymentResponseDto createPayment(PaymentCreateRequestDto request) {
@@ -31,6 +34,17 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setStatus(resolveStatus());
 
         Payment saved = paymentRepository.save(payment);
+
+        paymentEventProducer.sendPaymentCreatedEvent(
+                PaymentCreatedEvent.builder()
+                        .eventType("CREATE_PAYMENT")
+                        .orderId(saved.getOrderId())
+                        .paymentId(saved.getId())
+                        .status(saved.getStatus())
+                        .timestamp(saved.getTimestamp())
+                        .build()
+        );
+
         return paymentMapper.toResponse(saved);
     }
 
