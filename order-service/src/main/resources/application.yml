@@ -21,6 +21,19 @@ spring:
     enabled: true
     change-log: classpath:db/db.changelog-master.yml
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: order-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.example.orderservice.event"
+
+kafka:
+  topic:
+    payment-events: payment-events
+
 server:
   port: ${SERVER_PORT:8083}
 
