@@ -9,6 +9,7 @@ import com.example.paymentservice.entity.PaymentStatus;
 import com.example.paymentservice.event.PaymentCreatedEvent;
 import com.example.paymentservice.mapper.PaymentMapper;
 import com.example.paymentservice.producer.PaymentEventProducer;
+import com.example.paymentservice.repository.PaymentAggregationRepository;
 import com.example.paymentservice.repository.PaymentRepository;
 import com.example.paymentservice.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.List;
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final PaymentAggregationRepository paymentAggregationRepository;
     private final PaymentMapper paymentMapper;
     private final RandomNumberClient randomNumberClient;
     private final PaymentEventProducer paymentEventProducer;
@@ -71,9 +73,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public TotalSumResponseDto getTotalSumForUser(Long userId, LocalDateTime from, LocalDateTime to) {
-        BigDecimal total = paymentRepository.sumPaymentsByUserAndDateRange(userId, from, to)
-                .map(PaymentRepository.TotalSum::getTotal)
-                .orElse(BigDecimal.ZERO);
+        BigDecimal total = paymentAggregationRepository.sumByUserAndDateRange(userId, from, to);
 
         return TotalSumResponseDto.builder()
                 .totalSum(total)
@@ -84,9 +84,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public TotalSumResponseDto getTotalSumForAllUsers(LocalDateTime from, LocalDateTime to) {
-        BigDecimal total = paymentRepository.sumAllPaymentsByDateRange(from, to)
-                .map(PaymentRepository.TotalSum::getTotal)
-                .orElse(BigDecimal.ZERO);
+        BigDecimal total = paymentAggregationRepository.sumByDateRange(from, to);
 
         return TotalSumResponseDto.builder()
                 .totalSum(total)
