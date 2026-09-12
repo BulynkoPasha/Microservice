@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: microservice
+data:
+  USER_DB_NAME: user_service_db
+  AUTH_DB_NAME: auth_service_db
+  ORDER_DB_NAME: order_service_db
