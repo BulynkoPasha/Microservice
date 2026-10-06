@@ -1,4 +1,4 @@
-package com.example.authservice.dto.response;
+package com.example.apigateway.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TokenResponse {
-
+public class TokenResponseDto {
     private Long userId;
     private String accessToken;
     private String refreshToken;

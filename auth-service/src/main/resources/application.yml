@@ -28,3 +28,6 @@ jwt:
 
 server:
   port: ${SERVER_PORT:8082}
+
+internal:
+  secret: ${INTERNAL_SECRET}

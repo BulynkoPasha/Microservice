@@ -27,7 +27,7 @@ public class Credential extends Audit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false, unique = true)
+    @Column(name = "user_id", unique = true)
     private Long userId;
 
     @Column(nullable = false, unique = true, length = 200)

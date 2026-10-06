@@ -1,7 +1,7 @@
-name: CI Pipeline
+name: User Service CI Pipeline
 
 on:
-  push:
+  pull_request:
     branches:
       - dev
     paths:
@@ -139,6 +139,10 @@ jobs:
 
       - name: Show running containers
         run: docker compose ps
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose logs
 
       - name: Stop and remove containers
         run: docker compose down -v

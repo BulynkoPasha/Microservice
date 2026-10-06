@@ -5,3 +5,6 @@ databaseChangeLog:
   - include:
       file: db/migration/002-create-refresh-tokens-table.yml
       relativeToChangelogFile: false
+  - include:
+      file: db/migration/003-alter-credentials-user-id-nullable.yml
+      relativeToChangelogFile: false

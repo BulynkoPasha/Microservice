@@ -54,8 +54,9 @@ public class AuthServiceImpl implements AuthService {
 
         Credential saved = credentialRepository.save(credential);
         saved.setUserId(saved.getId());
+        Credential withUserId = credentialRepository.save(saved);
 
-        return issueTokenPair(saved.getUserId(), saved.getRole().name());
+        return issueTokenPair(withUserId.getUserId(), withUserId.getRole().name());
     }
 
     @Override
@@ -128,6 +129,7 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenRepository.save(tokenEntity);
 
         return TokenResponse.builder()
+                .userId(userId)
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();

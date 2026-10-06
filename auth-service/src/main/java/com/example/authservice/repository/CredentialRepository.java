@@ -10,4 +10,6 @@ public interface CredentialRepository extends JpaRepository<Credential, Long> {
     Optional<Credential> findByLogin(String login);
 
     boolean existsByLogin(String login);
+
+    void deleteByUserId(Long userId);
 }
